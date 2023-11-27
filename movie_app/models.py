@@ -27,7 +27,16 @@ class Movie(models.Model):
 
 
 class Review(models.Model):
+    stars = (
+        '*', '*',
+        '**', '**',
+        '***', '***',
+        '****', '****',
+        '*****', '*****',
+    )
+
     text = models.TextField()
+    rate_stars = models.IntegerField(choices=stars)
     movie = models.ForeignKey(Movie, on_delete=models.Model, verbose_name='Обзор')
 
     def __init__(self, *args, **kwargs):
