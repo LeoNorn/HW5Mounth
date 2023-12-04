@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from movie_app.models import Movie, Director, Review
-from movie_app.serializers import DirectorSerializer, MovieSerializer, ReviewSerializer,\
-    MovieDetailSerializer, DirectorDetailSerializer, ReviewDetailSerializer
+from movie_app.serializers import DirectorSerializer, MovieSerializer, ReviewSerializer, MovieDetailSerializer, \
+    DirectorDetailSerializer, \
+    ReviewDetailSerializer, DirValidateSerializer
 
 
 
@@ -25,12 +26,9 @@ def get_director_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        name = request.data.get('name')
-
-        director = Director.objects.create(
-            name=name
-        )
-        director.name.set(name)
+        serializer = DirValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = serializer.save()
 
         serializer = DirectorSerializer(instance=name, many=False)
 
@@ -55,9 +53,9 @@ def get_director_by_id(request, dir_id):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        director.name = request.data.get('name', director.name)
-
-        director.save()
+        serializer = DirValidateSerializer(instance=director, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        director = serializer.update(instance=director, validated_data=serializer.validated_data)
 
         serializer = DirectorDetailSerializer(instance=director, many=False)
 
@@ -95,17 +93,9 @@ def get_movie_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        title = request.data.get('title')
-        description = request.data.get('description')
-        director = request.data.get('director')
-        duration = request.data.get('duration', [])
-
-        movie = Movie.objects.create(
-            title=title,
-            description=description,
-            director=director,
-        )
-        movie.duration.set(duration)
+        serializer = DirValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        movie = serializer.save()
 
         serializer = MovieSerializer(instance=movie, many=False)
 
@@ -129,14 +119,9 @@ def get_movie_by_id(request, movie_id):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        movie.title = request.data.get('tite', movie.title)
-        movie.description = request.data.get('description', movie.description)
-        movie.director = request.data.get('director', movie.director)
-
-        duration = request.data.get('duration', movie.duration.all())
-        movie.duration.set(duration)
-
-        movie.save()
+        serializer = DirValidateSerializer(instance=movie, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        movie = serializer.update(instance=movie, validated_data=serializer.validated_data)
 
         serializer = MovieDetailSerializer(instance=movie, many=False)
 
@@ -173,17 +158,9 @@ def get_review_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        text = request.data.get('text')
-        movie = request.data.get('movie')
-        rate_stars = request.data.get('stars', [])
-
-        review = Review.objects.create(
-            text=text,
-            movie=movie,
-            rate_stars=rate_stars
-        )
-
-        review.rate_stars.set(rate_stars)
+        serializer = DirValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        review = serializer.save()
 
         serializer = ReviewSerializer(instance=review, many=False)
 
@@ -207,11 +184,9 @@ def get_review_by_id(request, review_id):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        review.text = request.data.get('text', review.title)
-        review.movie = request.data.get('movie', review.content)
-        review.rate_stars = request.data.get('rate_stars', review.category_id)
-
-        review.save()
+        serializer = DirValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        review = serializer.save()
 
         serializer = ReviewDetailSerializer(instance=review, many=False)
 
