@@ -1,52 +1,33 @@
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from movie_app.models import Movie, Director, Review
 from movie_app.serializers import DirectorSerializer, MovieSerializer, ReviewSerializer, MovieDetailSerializer, \
     DirectorDetailSerializer, \
-    ReviewDetailSerializer, DirValidateSerializer
-
-
-
-# method GET, POST, PUT, PATCH, DELETE
+    ReviewDetailSerializer, DirValidateSerializer, MovieReviewSerializer
 
 
 @api_view(['GET', 'POST'])
 def get_director_list(request):
     if request.method == 'GET':
-        director = Director.objects.all() \
-            .select_related('review') \
-            .prefetch_related('director', 'movie')
-
-        search = request.query_params.get('search', None)
-        if search is not None:
-            name = director.filter(title__icontains=search)
-
-        serializer = DirectorSerializer(instance=name, many=True)
-
-        return Response(serializer.data)
+        director = Director.objects.all()
+        serializer = DirectorSerializer(director, many=True).data
+        return Response(data=serializer, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
-        serializer = DirValidateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        name = serializer.save()
-
-        serializer = DirectorSerializer(instance=name, many=False)
-
-        return Response(
-            {
-                "message": "Created!",
-                "data": serializer.data
-            },
-            status=201
-        )
+        serializer = DirectorSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-def get_director_by_id(request, dir_id):
+def get_director_by_id(request, id):
     try:
-        director = Director.objects.get(id=dir_id)
+        director = Director.objects.get(id=id)
     except Director.DoesNotExist:
-        return Response({f"Директора с id {dir_id} не существует"}, status=404)
+        return Response({f"Директора с id {id} не существует"}, status=404)
 
     if request.method == 'GET':
         serializer = DirectorDetailSerializer(instance=director, many=False)
@@ -80,9 +61,7 @@ def get_director_by_id(request, dir_id):
 @api_view(['GET','POST'])
 def get_movie_list(request):
     if request.method == 'GET':
-        movie = Movie.objects.all() \
-            .select_related('review') \
-            .prefetch_related('director', 'movie')
+        movie = Movie.objects.all()
 
         search = request.query_params.get('search', None)
         if search is not None:
@@ -108,18 +87,18 @@ def get_movie_list(request):
         )
 
 @api_view(['GET', 'PUT', 'DELETE'])
-def get_movie_by_id(request, movie_id):
+def get_movie_by_id(request, id):
     try:
-        movie = Movie.objects.get(id=movie_id)
+        movie = Movie.objects.get(id=id)
     except Movie.DoesNotExist:
-        return Response({f'Фильма с id {movie_id} не существует'}, status=404)
+        return Response({f'Фильма с id {id} не существует'}, status=404)
 
     if request.method == 'GET':
         serializer = MovieDetailSerializer(instance=movie, many=False)
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        serializer = DirValidateSerializer(instance=movie, data=request.data)
+        serializer = MovieDetailSerializer(instance=movie, data=request.data)
         serializer.is_valid(raise_exception=True)
         movie = serializer.update(instance=movie, validated_data=serializer.validated_data)
 
@@ -145,9 +124,7 @@ def get_movie_by_id(request, movie_id):
 @api_view(['GET', 'POST'])
 def get_review_list(request):
     if request.method == 'GET':
-        review = Review.objects.all() \
-            .select_related('review') \
-            .prefetch_related('director', 'movie')
+        review = Review.objects.all()
 
         search = request.query_params.get('search', None)
         if search is not None:
@@ -158,7 +135,7 @@ def get_review_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = DirValidateSerializer(data=request.data)
+        serializer = ReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save()
 
@@ -173,18 +150,18 @@ def get_review_list(request):
         )
 
 @api_view(['GET', 'PUT', 'DELETE'])
-def get_review_by_id(request, review_id):
+def get_review_by_id(request, id):
     try:
-        review = Review.objects.filter(id=review_id)
+        review = Review.objects.get(id=id)
     except Review.DoesNotExist:
-        return Response({f"Отзыва с id {review_id} не существует"}, status=404)
+        return Response({f"Отзыва с id {id} не существует"}, status=404)
 
     if request.method == 'GET':
         serializer = ReviewDetailSerializer(instance=review, many=False)
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        serializer = DirValidateSerializer(data=request.data)
+        serializer = ReviewDetailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save()
 
@@ -207,3 +184,9 @@ def get_review_by_id(request, review_id):
             status=204
         )
 
+
+@api_view(['GET'])
+def review_movie(request):
+    review_m = Movie.objects.all()
+    serializer = MovieReviewSerializer(review_m, many=True).data
+    return Response(data=serializer, status=status.HTTP_200_OK)

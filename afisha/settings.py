@@ -29,11 +29,17 @@ INSTALLED_APPS = [
 
     # Third party apps
     'rest_framework',
-
+    'rest_framework.authtoken',
 
     # local apps
     'movie_app',
-]
+    'users',
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTENTICATION_CLASSES': [
+        'rest_framework.autentication.TokenAutentication'
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
